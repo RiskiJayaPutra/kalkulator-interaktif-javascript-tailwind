@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kalkulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      .glass-effect {
+        background: rgba(30, 30, 30, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(60, 60, 60, 0.5);
+      }
+
+      .btn-hover {
+        transition: all 0.2s ease;
+      }
+
+      .btn-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      }
+
+      .btn-hover:active {
+        transform: translateY(0);
+      }
+
+      .display-glow {
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .history-item {
+        animation: slideIn 0.3s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .ripple {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .ripple::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+
+      .ripple:active::after {
+        width: 200px;
+        height: 200px;
+      }
+
+      .gradient-bg {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      }
+      .memory-indicator {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+    </style>
+  </head>
+  <body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-6xl">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+          <div class="glass-effect rounded-3xl shadow-2xl p-6">
+            <div class="flex items-center justify-end mb-6">
+              <div class="flex items-center space-x-2">
+                <div id="memoryIndicator" class="hidden memory-indicator">
+                  <span class="text-xs text-gray-300 font-bold">M</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="bg-gray-200 rounded-2xl p-6 mb-6 shadow-inner border border-gray-200"
+            >
+              <div class="text-right">
+                <div
+                  id="previousOperand"
+                  class="text-gray-500 text-lg font-light h-8 overflow-hidden"
+                ></div>
+                <div
+                  id="currentOperand"
+                  class="text-gray-900 text-5xl font-bold mt-2 break-all"
+                  style="min-height: 60px"
+                >
+                  0
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gray-800 bg-opacity-50 rounded-xl p-3 mb-4">
+              <div
+                class="flex items-center justify-between text-gray-300 text-sm"
+              >
+                <span class="font-medium">Memory:</span>
+                <span id="memoryDisplay" class="font-mono">0</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-5 gap-3">
+              <button
+                onclick="memoryRecall()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                MR
+              </button>
+              <button
+                onclick="memoryClear()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                MC
+              </button>
+              <button
+                onclick="memoryAdd()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                M+
+              </button>
+              <button
+                onclick="memorySubtract()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                M-
+              </button>
+              <button
+                onclick="clearAll()"
+                class="btn-hover ripple bg-red-900 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-red-800"
+              >
+                C
+              </button>
+
+              <button
+                onclick="clearEntry()"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-700"
+              >
+                CE
+              </button>
+              <button
+                onclick="percentage()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                %
+              </button>
+              <button
+                onclick="backspace()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                ⌫
+              </button>
+              <button
+                onclick="negate()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                ±
+              </button>
+              <button
+                onclick="chooseOperation('÷')"
+                class="btn-hover ripple bg-gray-600 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-500"
+              >
+                ÷
+              </button>
+
+              <button
+                onclick="appendNumber('7')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                7
+              </button>
+              <button
+                onclick="appendNumber('8')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                8
+              </button>
+              <button
+                onclick="appendNumber('9')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                9
+              </button>
+              <button
+                onclick="square()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                x²
+              </button>
+              <button
+                onclick="chooseOperation('×')"
+                class="btn-hover ripple bg-gray-600 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-500"
+              >
+                ×
+              </button>
+
+              <button
+                onclick="appendNumber('4')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                4
+              </button>
+              <button
+                onclick="appendNumber('5')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                5
+              </button>
+              <button
+                onclick="appendNumber('6')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                6
+              </button>
+              <button
+                onclick="squareRoot()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                √
+              </button>
+              <button
+                onclick="chooseOperation('-')"
+                class="btn-hover ripple bg-gray-600 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-500"
+              >
+                -
+              </button>
+
+              <button
+                onclick="appendNumber('1')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                1
+              </button>
+              <button
+                onclick="appendNumber('2')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                2
+              </button>
+              <button
+                onclick="appendNumber('3')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                3
+              </button>
+              <button
+                onclick="reciprocal()"
+                class="btn-hover ripple bg-gray-700 text-white rounded-xl p-4 font-semibold text-lg shadow-lg hover:bg-gray-600"
+              >
+                1/x
+              </button>
+              <button
+                onclick="chooseOperation('+')"
+                class="btn-hover ripple bg-gray-600 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-500"
+              >
+                +
+              </button>
+
+              <button
+                onclick="appendNumber('0')"
+                class="btn-hover ripple col-span-2 bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                0
+              </button>
+              <button
+                onclick="appendNumber('.')"
+                class="btn-hover ripple bg-gray-800 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-gray-700"
+              >
+                .
+              </button>
+              <button
+              
+                onclick="compute()"
+                class="btn-hover ripple col-span-2 bg-gray-900 text-white rounded-xl p-4 font-semibold text-2xl shadow-lg hover:bg-black"
+              >
+                =
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-1">
+          <div class="glass-effect rounded-3xl shadow-2xl p-6 h-full">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-white text-lg font-semibold">History</h2>
+              <button
+                onclick="clearHistory()"
+                class="text-gray-400 hover:text-gray-300 text-sm font-medium transition"
+              >
+                Clear All
+              </button>
+            </div>
+
+            <div
+              id="historyList"
+              class="space-y-3 overflow-y-auto"
+              style="max-height: calc(100vh - 200px)"
+            >
+              <div class="text-center text-gray-400 py-8">
+                <svg
+                  class="w-16 h-16 mx-auto mb-3 opacity-30"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                <p class="text-sm">No history yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-6 text-gray-400 text-sm">
+        <p>
+          Keyboard Shortcuts: Numbers (0-9), Operators (+, -, *, /), Enter (=),
+          Escape (C), Backspace (⌫)
+        </p>
+      </div>
+    </div>
+
+    <script>
+      let currentOperand = "0";
+      let previousOperand = "";
+      let operation = null;
+      let shouldResetScreen = false;
+      let memory = 0;
+      let history = [];
+      const MAX_HISTORY = 5;
+
+      const currentOperandElement = document.getElementById("currentOperand");
+      const previousOperandElement = document.getElementById("previousOperand");
+      const memoryDisplay = document.getElementById("memoryDisplay");
+      const memoryIndicator = document.getElementById("memoryIndicator");
+      const historyList = document.getElementById("historyList");
+
+      updateDisplay();
+
+      function appendNumber(number) {
+        if (currentOperand.length >= 15) return;
+
+        if (number === "." && currentOperand.includes(".")) return;
+
+        if (shouldResetScreen) {
+          currentOperand = number === "." ? "0." : number;
+          shouldResetScreen = false;
+        } else {
+          if (currentOperand === "0" && number !== ".") {
+            currentOperand = number;
+          } else {
+            currentOperand += number;
+          }
+        }
+
+        updateDisplay();
+      }
+
+      function chooseOperation(op) {
+        if (currentOperand === "") return;
+
+        if (previousOperand !== "") {
+          compute();
+        }
+
+        operation = op;
+        previousOperand = currentOperand;
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function compute() {
+        let computation;
+        const prev = parseFloat(previousOperand);
+        const current = parseFloat(currentOperand);
+
+        if (isNaN(prev) || isNaN(current)) return;
+
+        switch (operation) {
+          case "+":
+            computation = prev + current;
+            break;
+          case "-":
+            computation = prev - current;
+            break;
+          case "×":
+            computation = prev * current;
+            break;
+          case "÷":
+            if (current === 0) {
+              alert("Error: Cannot divide by zero!");
+              clearAll();
+              return;
+            }
+            computation = prev / current;
+            break;
+          default:
+            return;
+        }
+
+        addToHistory(
+          `${formatNumber(prev)} ${operation} ${formatNumber(
+            current
+          )} = ${formatNumber(computation)}`
+        );
+
+        currentOperand = computation.toString();
+        operation = null;
+        previousOperand = "";
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function clearAll() {
+        currentOperand = "0";
+        previousOperand = "";
+        operation = null;
+        shouldResetScreen = false;
+        updateDisplay();
+      }
+
+      function clearEntry() {
+        currentOperand = "0";
+        shouldResetScreen = false;
+        updateDisplay();
+      }
+
+      function backspace() {
+        if (shouldResetScreen) return;
+
+        currentOperand = currentOperand.slice(0, -1);
+        if (currentOperand === "" || currentOperand === "-") {
+          currentOperand = "0";
+        }
+        updateDisplay();
+      }
+
+      function negate() {
+        if (currentOperand === "0") return;
+        currentOperand = (parseFloat(currentOperand) * -1).toString();
+        updateDisplay();
+      }
+
+      function percentage() {
+        currentOperand = (parseFloat(currentOperand) / 100).toString();
+        updateDisplay();
+      }
+
+      function square() {
+        const num = parseFloat(currentOperand);
+        currentOperand = (num * num).toString();
+        addToHistory(
+          `${formatNumber(num)}² = ${formatNumber(parseFloat(currentOperand))}`
+        );
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function squareRoot() {
+        const num = parseFloat(currentOperand);
+        if (num < 0) {
+          alert("Error: Cannot calculate square root of negative number!");
+          return;
+        }
+        currentOperand = Math.sqrt(num).toString();
+        addToHistory(
+          `√${formatNumber(num)} = ${formatNumber(parseFloat(currentOperand))}`
+        );
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function reciprocal() {
+        const num = parseFloat(currentOperand);
+        if (num === 0) {
+          alert("Error: Cannot divide by zero!");
+          return;
+        }
+        currentOperand = (1 / num).toString();
+        addToHistory(
+          `1/${formatNumber(num)} = ${formatNumber(parseFloat(currentOperand))}`
+        );
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function memoryAdd() {
+        memory += parseFloat(currentOperand);
+        updateMemoryDisplay();
+        shouldResetScreen = true;
+      }
+
+      function memorySubtract() {
+        memory -= parseFloat(currentOperand);
+        updateMemoryDisplay();
+        shouldResetScreen = true;
+      }
+
+      function memoryRecall() {
+        currentOperand = memory.toString();
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function memoryClear() {
+        memory = 0;
+        updateMemoryDisplay();
+      }
+
+      function updateMemoryDisplay() {
+        memoryDisplay.textContent = formatNumber(memory);
+        if (memory !== 0) {
+          memoryIndicator.classList.remove("hidden");
+        } else {
+          memoryIndicator.classList.add("hidden");
+        }
+      }
+
+      function addToHistory(entry) {
+        history.unshift(entry);
+        if (history.length > MAX_HISTORY) {
+          history.pop();
+        }
+        renderHistory();
+      }
+
+      function renderHistory() {
+        if (history.length === 0) {
+          historyList.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <svg class="w-16 h-16 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm">No history yet</p>
+                    </div>
+                `;
+          return;
+        }
+
+        historyList.innerHTML = history
+          .map(
+            (entry, index) => `
+                <div class="history-item bg-gray-800 bg-opacity-50 rounded-xl p-4 hover:bg-opacity-70 transition cursor-pointer" 
+                     onclick="useHistoryResult(${index})">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <p class="text-white text-sm font-mono break-all">${entry}</p>
+                        </div>
+                        <span class="text-gray-400 text-xs ml-2">#${
+                          history.length - index
+                        }</span>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function useHistoryResult(index) {
+        const entry = history[index];
+        const result = entry.split("=")[1].trim().replace(/,/g, "");
+        currentOperand = result;
+        shouldResetScreen = true;
+        updateDisplay();
+      }
+
+      function clearHistory() {
+        if (history.length === 0) return;
+        if (confirm("Clear all history?")) {
+          history = [];
+          renderHistory();
+        }
+      }
+
+      function updateDisplay() {
+        currentOperandElement.textContent = formatDisplayNumber(currentOperand);
+
+        if (operation != null) {
+          previousOperandElement.textContent = `${formatNumber(
+            parseFloat(previousOperand)
+          )} ${operation}`;
+        } else {
+          previousOperandElement.textContent = "";
+        }
+      }
+
+      function formatNumber(number) {
+        if (isNaN(number)) return "0";
+
+        const stringNumber = number.toString();
+        const [integer, decimal] = stringNumber.split(".");
+        const formattedInteger = parseFloat(integer).toLocaleString("en");
+
+        return decimal != null
+          ? `${formattedInteger}.${decimal}`
+          : formattedInteger;
+      }
+
+      function formatDisplayNumber(number) {
+        const stringNumber = number.toString();
+        const [integer, decimal] = stringNumber.split(".");
+        let formattedInteger;
+
+        if (integer.length > 12) {
+          formattedInteger = parseFloat(integer).toExponential(2);
+        } else {
+          formattedInteger = parseFloat(integer || 0).toLocaleString("en");
+        }
+
+        return decimal != null
+          ? `${formattedInteger}.${decimal}`
+          : formattedInteger;
+      }
+
+      document.addEventListener("keydown", function (event) {
+        event.preventDefault();
+
+        if (event.key >= "0" && event.key <= "9") {
+          appendNumber(event.key);
+        }
+
+        if (event.key === "." || event.key === ",") {
+          appendNumber(".");
+        }
+
+        if (event.key === "+") chooseOperation("+");
+        if (event.key === "-") chooseOperation("-");
+        if (event.key === "*") chooseOperation("×");
+        if (event.key === "/") chooseOperation("÷");
+
+        if (event.key === "Enter" || event.key === "=") {
+          compute();
+        }
+
+        if (event.key === "Escape") {
+          clearAll();
+        }
+
+        if (event.key === "Backspace") {
+          backspace();
+        }
+
+        if (event.key === "%") {
+          percentage();
+        }
+      });
+
+      renderHistory();
+    </script>
+  </body>
+</html>
